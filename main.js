@@ -277,7 +277,6 @@ shavingTool.onmousedown = async () => {
   }
   shavingStatus = true;
   shavingTool.style.cursor = "grabbing";
-  //shavingTool.style.transition = "all 0.25s ease";
   await delay(1);
   shavingTool.style.scale = "0.8";
 };
@@ -288,7 +287,6 @@ shavingTool.onmouseup = async () => {
   shavingTool.style.cursor = "pointer";
   shavingStatus = false;
   shavingTool.style.scale = "1";
-  shavingTool.style.transition = "";
 };
 shavingTool.onmouseleave = async () => {
   shavingSound.volume = 0;
@@ -296,7 +294,6 @@ shavingTool.onmouseleave = async () => {
   shavingTool.style.cursor = "pointer";
   shavingStatus = false;
   shavingTool.style.scale = "1";
-  shavingTool.style.transition = "";
 };
 
 function checkCollision(rect1, rect2) {
@@ -308,6 +305,27 @@ function checkCollision(rect1, rect2) {
   );
 }
 
+let currentShavingToolX = 0;
+let currentShavingToolY = 0;
+let targetShavingToolX = 0;
+let targetShavingToolY = 0;
+const easingFactor = 0.1;
+
+function animateShavingTool() {
+  const currentEasingFactor = shavingStatus ? 0.02 : easingFactor;
+  currentShavingToolX +=
+    (targetShavingToolX - currentShavingToolX) * currentEasingFactor;
+  currentShavingToolY +=
+    (targetShavingToolY - currentShavingToolY) * currentEasingFactor;
+
+  shavingTool.style.left = `${currentShavingToolX}px`;
+  shavingTool.style.top = `${currentShavingToolY}px`;
+
+  requestAnimationFrame(animateShavingTool);
+}
+
+animateShavingTool();
+
 background.addEventListener("mousemove", async (event) => {
   const backgroundRect = background.getBoundingClientRect();
   const currentZoom = parseFloat(background.style.zoom) / 100 || 1;
@@ -316,8 +334,9 @@ background.addEventListener("mousemove", async (event) => {
 
   const toolOffsetX = shavingTool.offsetWidth / 2;
   const toolOffsetY = shavingTool.offsetHeight / 2;
-  if (!shavingStatus) shavingTool.style.left = `${mouseX - toolOffsetX}px`;
-  shavingTool.style.top = `${mouseY - 25}px`;
+
+  if (!shavingStatus) targetShavingToolX = mouseX - toolOffsetX;
+  targetShavingToolY = mouseY - 25;
 
   if (shavingStatus) {
     const shavingToolRect = shavingTool.getBoundingClientRect();
