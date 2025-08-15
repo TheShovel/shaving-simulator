@@ -277,7 +277,7 @@ shavingTool.onmousedown = async () => {
   }
   shavingStatus = true;
   shavingTool.style.cursor = "grabbing";
-  shavingTool.style.transition = "all 0.25s ease";
+  //shavingTool.style.transition = "all 0.25s ease";
   await delay(1);
   shavingTool.style.scale = "0.8";
 };
@@ -335,7 +335,7 @@ background.addEventListener("mousemove", async (event) => {
     const hairs = Array.from(leg.children);
 
     for (const hair of hairs) {
-      if (hair.style.animation === "3s ease-in-out infinite alternate sway") {
+      if (hair.style.width == "10px") {
         const hairRect = hair.getBoundingClientRect();
 
         const adjustedHairRect = {
@@ -357,6 +357,7 @@ background.addEventListener("mousemove", async (event) => {
           shaveCount.textContent = `Hairs cut: ${shaves}`;
           hairShadow.style.opacity = hairCount * 0.001;
           hair.style.animation = "none";
+          hair.style.width = "9px";
           await delay(10);
           hair.style.opacity = 0;
           hair.style.transform = `rotate(${randomInt(-100, 100)}deg) translateX(${randomInt(-100, 100)}px)`;
