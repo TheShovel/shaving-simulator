@@ -1,3 +1,19 @@
+const shavingSound = new Audio("shaving.mp3");
+const touchSound = new Audio("touch.mp3");
+const releaseSound = new Audio("release.mp3");
+const music = new Audio("Bass Meant Jazz.mp3");
+music.loop = true;
+
+const styleSheet = document.createElement("style");
+styleSheet.innerText = `
+@keyframes sway {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+  100% { transform: rotate(-5deg); }
+}
+`;
+document.head.appendChild(styleSheet);
+
 function updateHighScore() {
   highScoreDisplay.style.opacity = 1;
   const totalSeconds = localStorage.shavingHighScore;
@@ -15,6 +31,14 @@ if (localStorage.shavingToatalShaves > 0) {
 }
 let skinToneIndex = 0;
 const skinTones = ["#E0AB8B", "#743D2B", "#B06C49", "#E4BFBC", "#C68863"];
+const completeText = [
+  "You did it!",
+  "Wow, amazing!",
+  "So clean!",
+  "Incredible!",
+  "Outstanding!",
+  "Good job!",
+];
 
 let canShave = false;
 let timerInterval = null;
@@ -51,6 +75,7 @@ shavingTool.style.cssText = `
   width: 80px;
   height: 180px;
   background: blue;
+  top: 200%;
 `;
 const leg = document.createElement("div");
 leg.style.cssText = `
@@ -60,21 +85,64 @@ leg.style.cssText = `
   bottom: 0px;
   left: -45%;
   transition: all 2s ease;
+`;
+const line1 = document.createElement("div");
+line1.style.cssText = `
+  background: black;
+  position: absolute;
+  width: 50px;
+  height: 120%;
+  transition: all 2s ease;
+  background: url("assets/line.PNG");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  bottom: -17px;
+  left: -25px;
+`;
+const line2 = document.createElement("div");
+line2.style.cssText = `
+  background: black;
+  position: absolute;
+  width: 50px;
+  height: 120%;
+  transition: all 2s ease;
+  background: url("assets/line.PNG");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  bottom: -17px;
+  right: -25px;
+`;
+
+const hairShadow = document.createElement("div");
+hairShadow.style.cssText = `
+  filter: blur(25px);
+  background: black;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: all 2s ease;
+  background: black;
+  opacity: 0.3;
 
 `;
 
 background.appendChild(leg);
+leg.appendChild(hairShadow);
+leg.appendChild(line1);
+leg.appendChild(line2);
 background.appendChild(shavingTool);
 const progressBar = document.createElement("div");
 progressBar.style.cssText = `
+  opacity: 0;
   position: absolute;
+  align-content: center;
   width: 0%;
   height: 20px;
   background: black;
   color: white;
   font-family: monospace;
   font-size: 13px;
-  transition: all 0.1s ease;
+  transition: all 1s ease;
   text-align: center;
   user-select: none;
   white-space: nowrap;
@@ -86,12 +154,13 @@ background.appendChild(progressBar);
 
 const shaveCount = document.createElement("div");
 shaveCount.style.cssText = `
+  opacity: 0;
   right: 0px;
   position: absolute;
   color: white;
   font-family: monospace;
   font-size: 13px;
-  transition: all 0.1s ease;
+  transition: all 1s ease;
   text-align: center;
   user-select: none;
   white-space: nowrap;
@@ -103,12 +172,13 @@ background.appendChild(shaveCount);
 
 const timerDisplay = document.createElement("div");
 timerDisplay.style.cssText = `
+  opacity: 0;
   top: 20px;
   position: absolute;
   color: white;
   font-family: monospace;
   font-size: 13px;
-  transition: all 0.1s ease;
+  transition: all 1s ease;
   text-align: center;
   user-select: none;
   white-space: nowrap;
@@ -131,6 +201,7 @@ highScoreDisplay.style.cssText = `
   white-space: nowrap;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 `;
+if (localStorage.shavingToatalShaves > 0) shaveCount.style.opacity = 1;
 if (localStorage.shavingHighScore > 0) {
   updateHighScore();
 } else {
@@ -138,12 +209,45 @@ if (localStorage.shavingHighScore > 0) {
 }
 background.appendChild(highScoreDisplay);
 
+const congratsDisplay = document.createElement("div");
+congratsDisplay.style.cssText = `
+  pointer-events: none;
+  align-content: center;
+  opacity: 0;
+  width: 100%;
+  height: 50px;
+  top: 50%;
+  background: black;
+  position: absolute;
+  color: white;
+  font-family: monospace;
+  font-size: 13px;
+  transition: all 1s ease;
+  text-align: center;
+  user-select: none;
+  white-space: nowrap;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+`;
+congratsDisplay.textContent = "Congratulations!";
+background.appendChild(congratsDisplay);
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+async function showCongrats() {
+  congratsDisplay.textContent =
+    completeText[randomInt(0, completeText.length - 1)];
+  congratsDisplay.style.opacity = 1;
+  await delay(2000);
+  congratsDisplay.style.opacity = 0;
+}
+
 let shavingStatus = false;
 shavingTool.onmousedown = async () => {
   if (!canShave) {
     return;
   }
+  shavingSound.volume = 1;
+  touchSound.play();
   if (timerInterval === null) {
+    timerDisplay.style.opacity = 1;
     startTime = Date.now() - elapsedTime;
     timerInterval = setInterval(updateTimer, 1000);
   }
@@ -154,11 +258,17 @@ shavingTool.onmousedown = async () => {
   shavingTool.style.scale = "0.8";
 };
 shavingTool.onmouseup = async () => {
+  shavingSound.volume = 0;
+  releaseSound.play();
+  shavingTool.style.cursor = "";
   shavingStatus = false;
   shavingTool.style.scale = "1";
   shavingTool.style.transition = "";
 };
 shavingTool.onmouseleave = async () => {
+  shavingSound.volume = 0;
+  releaseSound.play();
+  shavingTool.style.cursor = "";
   shavingStatus = false;
   shavingTool.style.scale = "1";
   shavingTool.style.transition = "";
@@ -200,7 +310,8 @@ background.addEventListener("mousemove", async (event) => {
     const hairs = Array.from(leg.children);
 
     for (const hair of hairs) {
-      if (hair.style.background === "black") {
+      console.log(hair.style.animation);
+      if (hair.style.animation === "3s ease-in-out infinite alternate sway") {
         const hairRect = hair.getBoundingClientRect();
 
         const adjustedHairRect = {
@@ -216,10 +327,14 @@ background.addEventListener("mousemove", async (event) => {
           checkCollision(adjustedShavingToolRect, adjustedHairRect) &&
           randomInt(0, hairCount / 10) == 0
         ) {
-          hair.style.background = "#0f0f0f";
+          shavingSound.play();
+          hairCount--;
+          hairShadow.style.opacity = hairCount * 0.001;
+          hair.style.animation = "none";
+          await delay(10);
           hair.style.opacity = 0;
           hair.style.transform = `rotate(${randomInt(-100, 100)}deg) translateX(${randomInt(-100, 100)}px)`;
-          hairCount--;
+          progressBar.style.opacity = 1;
           progressBar.textContent = `Progress ${Math.floor((300 - hairCount) / 3)}%`;
           progressBar.style.width = `${Math.floor((300 - hairCount) / 3)}%`;
           await delay(1000);
@@ -228,7 +343,10 @@ background.addEventListener("mousemove", async (event) => {
             await delay(randomInt(10, 100));
             if (!completed) {
               completed = true;
+              showCongrats();
+              music.play();
               shaves++;
+              shaveCount.style.opacity = 1;
               stopTimer();
               leg.style.left = "110%";
               await delay(2000);
@@ -248,8 +366,6 @@ background.addEventListener("mousemove", async (event) => {
   }
 });
 
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
 function updateTimer() {
   elapsedTime = Date.now() - startTime;
   const totalSeconds = Math.floor(elapsedTime / 1000);
@@ -261,10 +377,14 @@ function updateTimer() {
 function stopTimer() {
   const totalSeconds = Math.floor(elapsedTime / 1000);
   canShave = false;
-  if (totalSeconds < localStorage.shavingHighScore)
+  if (
+    totalSeconds < localStorage.shavingHighScore ||
+    localStorage.shavingHighScore == undefined
+  ) {
     console.log("new best time");
-  localStorage.setItem("shavingHighScore", totalSeconds);
-  updateHighScore();
+    localStorage.setItem("shavingHighScore", totalSeconds);
+    updateHighScore();
+  }
   startTime = Date.now();
   clearInterval(timerInterval);
   timerInterval = null;
@@ -291,14 +411,19 @@ async function createLegHair() {
   for (let i = 0; i < 300; i++) {
     const hair = document.createElement("div");
     hair.style.cssText = `
+      transform-origin: 50% 100% 0;
+      animation: sway 3s ease-in-out infinite alternate;
       transition: all 1s linear;
       position: absolute;
-      width: 5px;
+      width: 10px;
       rotate: ${randomInt(-25, 25)}deg;
-      height: ${randomInt(10, 30)}px;
+      height: ${randomInt(20, 40)}px;
       background: black;
-      left: ${randomInt(0, 100)}%;
+      left: ${randomInt(5, 95)}%;
       bottom: ${randomInt(1, 90)}%;
+      background: url("assets/hair.PNG");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
     `;
     hairCount++;
     leg.appendChild(hair);
@@ -312,6 +437,7 @@ async function introAnimation() {
   shaveCount.textContent = `Shaves: ${shaves}`;
   localStorage.setItem("shavingToatalShaves", shaves);
   completed = false;
+  hairShadow.style.opacity = 0.3;
   createLegHair();
   await delay(1000);
   leg.style.left = "30%";
