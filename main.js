@@ -312,7 +312,7 @@ let targetShavingToolY = 0;
 const easingFactor = 0.1;
 
 function animateShavingTool() {
-  const currentEasingFactor = shavingStatus ? 0.02 : easingFactor;
+  const currentEasingFactor = shavingStatus ? 0.02 : 1;
   currentShavingToolX +=
     (targetShavingToolX - currentShavingToolX) * currentEasingFactor;
   currentShavingToolY +=
